@@ -14,3 +14,11 @@ export type TChatMessage = {
   message: string;
   event: string;
 };
+
+export type TTileName = {
+  raw: string;
+  time: string;
+  chainID: string;
+  name: string;
+  event: string;
+};

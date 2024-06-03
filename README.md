@@ -32,7 +32,7 @@ $ yarn add last-oasis-logs
 import { LogsReader } from 'last-oasis-logs';
 
 (async () => {
-  const logsReader = LogsReader({
+  const logsReader = new LogsReader({
     id: 1,
     autoReconnect: true,
     filePath: '/Mist/Saved/Logs/Mist.log',
@@ -61,5 +61,6 @@ import { LogsReader } from 'last-oasis-logs';
 | Event            | Return       | Type           |
 | ---------------- | ------------ | -------------- |
 | **CHAT_MESSAGE** | **response** | `TChatMessage` |
+| **TILE_NAME**    | **response** | `TTileName`    |
 | **connected**    | null         | null           |
 | **close**        | null         | null           |

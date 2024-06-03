@@ -69,29 +69,62 @@ export class LogsReader extends EventEmitter {
 
   #getTileName() {
     return new Promise((resolve, reject) => {
-      const stream = fs.createReadStream(this.filePath);
-      const rl = readline.createInterface({
-        input: stream,
-        crlfDelay: Infinity,
-      });
-
-      rl.on('line', (line) => {
-        if (line.includes('tile_name')) {
-          rl.close();
-          stream.close();
-
-          this.tileName = line.split('tile_name:')[1].trim();
-
-          resolve(true);
+      fs.stat(this.filePath, (err, stats) => {
+        if (err) {
+          reject(err);
+          return;
         }
-      });
 
-      rl.on('close', () => {
-        resolve(false);
-      });
+        const fileSize = stats.size;
+        const chunkSize = 1024;
+        let position = Math.max(fileSize - chunkSize, 0);
+        let lines: string[] = [];
 
-      stream.on('error', (err) => {
-        reject(err);
+        const readChunk = () => {
+          const stream = fs.createReadStream(this.filePath, {
+            start: position,
+            end: position + chunkSize,
+          });
+          const rl = readline.createInterface({
+            input: stream,
+            crlfDelay: Infinity,
+          });
+
+          rl.on('line', (line) => {
+            lines.push(line);
+          });
+
+          rl.on('close', () => {
+            for (let i = lines.length - 1; i >= 0; i--) {
+              if (lines[i].includes('tile_name')) {
+                rl.close();
+                stream.close();
+                this.tileName = lines[i]
+                  .split('tile_name:')[1]
+                  .trim();
+                resolve(true);
+                return;
+              }
+            }
+
+            if (position === 0) {
+              rl.close();
+              stream.close();
+              resolve(false);
+              return;
+            }
+
+            position = Math.max(position - chunkSize, 0);
+            lines = [];
+            readChunk();
+          });
+
+          stream.on('error', (err) => {
+            reject(err);
+          });
+        };
+
+        readChunk();
       });
     });
   }
